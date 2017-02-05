@@ -126,28 +126,8 @@ void BasicExample::stepSimulation(float deltaTime)
 			}
 		}
 	}
-	//moveTarget();
-	//std::cout << "check" << std::endl;
-
-
-
 		
 	updateSubstep(false);
-	
-	//pos_z_ = linkBody->getCenterOfMassPosition().getZ();
-	//pos_y_ = linkBody->getCenterOfMassPosition().getY();
-	//target_z_ = body->getCenterOfMassPosition().getZ();
-	//target_y_ = body->getCenterOfMassPosition().getY();
-
-	//distance_ = (Vector2D<double>(pos_y_, pos_z_) - Vector2D<double>(target_y_, target_z_)).getMagnitude();
-	//b3Printf("distance = %f\n", distance_);
-
-	//get distance
-	/*distance = sqrt(pow((body->getCenterOfMassPosition().getZ() - linkBody->getCenterOfMassPosition().getZ()), 2) + pow((body->getCenterOfMassPosition().getY() - linkBody->getCenterOfMassPosition().getY()), 2)) - 0.225;*/
-	/*moveTarget();
-	distance = sqrt(pow((body->getCenterOfMassPosition().getZ() - linkBody->getCenterOfMassPosition().getZ()), 2) + pow((body->getCenterOfMassPosition().getY() - linkBody->getCenterOfMassPosition().getY()), 2)) - 0.225;
-	b3Printf("distance = %f", distance);
-	b3Printf("\n");*/
 	m_dynamicsWorld->stepSimulation(1. / 240, 0);
 
 	static int count = 0;
@@ -307,11 +287,7 @@ void BasicExample::initPhysics()
 
 	if (1)
 	{
-		/*btVector3 groundHalfExtents(0.4, 0.0, 0.025);
-		groundHalfExtents[upAxis] = 0.4f;
-		btBoxShape* box = new btBoxShape(groundHalfExtents);
-		box->initializePolyhedralFeatures();*/
-
+		
 		btSphereShape* linkSphere_1 = new btSphereShape(radius);
 
 		btTransform start; start.setIdentity();
@@ -321,22 +297,6 @@ void BasicExample::initPhysics()
 		body = createRigidBody(0, start, linkSphere_1);
 
 		body->setFriction(0);
-
-
-
-		/*btVector3 human_HalfExtents(0.8, 0.0, 0.025);
-		human_HalfExtents[upAxis] = 0.8f;
-		btBoxShape* human_box = new btBoxShape(human_HalfExtents);
-		human_box->initializePolyhedralFeatures();
-
-		btTransform human_start;
-		human_start.setIdentity();
-		groundOrigin_target = btVector3(-0.4f, 2.8f, -1.6f);
-
-		human_start.setOrigin(groundOrigin_target);
-		human_body = createRigidBody(0, human_start, human_box);
-
-		human_body->setFriction(0);*/
 
 	}
 
@@ -365,57 +325,8 @@ void BasicExample::updateSubstep(const bool print)
 
 	VectorND<D> output;
 	nn_.copyOutputVector(output, false);
-	////std::cout << linkBody->getCenterOfMassPosition().getZ() << " " << pos_y_ << std::endl;
-	////   if(print == true) std::cout << output << std::endl;
 
 	const int selected_dir = nn_.getIXProbabilistic(output);
-	//if (print == true) std::cout << selected_dir << " " << std::flush;
-	//b3Printf("distance = %d\n", selected_dir);
-	/*if (handled) {
-		num_data = selected_dir;
-		
-		switch (selected_dir)
-		{
-		case 0:
-			hinge->setLimit(-M_PI / 1.2f, M_PI / 1.2f);
-			hinge->enableAngularMotor(true, 15.0, 4000.f);
-			handled = 0;
-			break;
-		case 1:
-			hinge->setLimit(-M_PI / 1.2f, M_PI / 1.2f);
-			hinge->enableAngularMotor(true, -15.0, 4000.f);
-			handled = 0;
-			break;
-		default:
-			std::cout << "Wrong dimension" << std::endl;
-		}
-	}
-	else
-	{
-		switch (num_data)
-		{
-		case 0:
-		{
-			lockLiftHinge();
-			handled = 1;
-			break;
-		}
-		case 1:
-		{
-
-			lockLiftHinge();
-			handled = 1;
-			break;
-		}
-		default:
-
-			break;
-		}
-	}*/
-	
-
-	/*if (handled) {
-		j = selected_dir;*/
 		switch (selected_dir)
 		{
 
@@ -461,43 +372,15 @@ void BasicExample::updateSubstep(const bool print)
 			break;
 		}
 		}
-	//}
-	/*else
-	{
-
-		switch (j)
-		{
-		case 0:
-		case 1:
-		{
-			
-			lockLiftHinge(hinge_shader);
-			handled = 1;
-			break;
-		}
-		case 2:
-		case 3:
-		{
-			
-			lockLiftHinge(hinge_elbow);
-			handled = 1;
-			break;
-		}
-		default:
-
-			break;
-		}
-	}*/
 	
 	pos_z_ = linkBody->getCenterOfMassPosition().getZ();
 	pos_y_ = linkBody->getCenterOfMassPosition().getY();
 	
-	//b3Printf("distance = %f\n", pos_z_);
+	
 	const double new_distance_ = (Vector2D<double>(pos_y_, pos_z_) - Vector2D<double>(target_y_, target_z_)).getMagnitude();
 	
 	
 	double reward_value = distance_ - new_distance_;
-	//b3Printf("distance = %f\n", new_distance_);
 	
 	if (new_distance_ <0.5)
 	{
@@ -514,14 +397,12 @@ void BasicExample::updateSubstep(const bool print)
 	{
 		if (selected_dir == d)
 		{
-			//          reward_vector[d] = ________________ ? 0.999 : 0.001;
 			reward_vector[d] = reward_value > 0 ? 0.999 : 0.001;
 		}
 		else
 		{
 			reward_vector[d] = reward_vector[d] < 0.001 ? 0.001 : reward_vector[d];
 		}
-		//std::cout << reward_vector[d] << std::endl;
 	}
 
 	const int max_tr = NUM_TRAIN;
