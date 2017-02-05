@@ -1,15 +1,3 @@
-/*
-Bullet Continuous Collision Detection and Physics Library
-Copyright (c) 2015 Google Inc. http://bulletphysics.org
-This software is provided 'as-is', without any express or implied warranty.
-In no event will the authors be held liable for any damages arising from the use of this software.
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute it freely,
-subject to the following restrictions:
-1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-3. This notice may not be removed or altered from any source distribution.
-*/
 
 
 #include "BasicExample.h"
@@ -365,53 +353,10 @@ void BasicExample::updateSubstep(const bool print)
 
 	VectorND<D> output;
 	nn_.copyOutputVector(output, false);
-	////std::cout << linkBody->getCenterOfMassPosition().getZ() << " " << pos_y_ << std::endl;
-	////   if(print == true) std::cout << output << std::endl;
-
+	
 	const int selected_dir = nn_.getIXProbabilistic(output);
-	//if (print == true) std::cout << selected_dir << " " << std::flush;
-	//b3Printf("distance = %d\n", selected_dir);
-	/*if (handled) {
-		num_data = selected_dir;
-		
-		switch (selected_dir)
-		{
-		case 0:
-			hinge->setLimit(-M_PI / 1.2f, M_PI / 1.2f);
-			hinge->enableAngularMotor(true, 15.0, 4000.f);
-			handled = 0;
-			break;
-		case 1:
-			hinge->setLimit(-M_PI / 1.2f, M_PI / 1.2f);
-			hinge->enableAngularMotor(true, -15.0, 4000.f);
-			handled = 0;
-			break;
-		default:
-			std::cout << "Wrong dimension" << std::endl;
-		}
-	}
-	else
-	{
-		switch (num_data)
-		{
-		case 0:
-		{
-			lockLiftHinge();
-			handled = 1;
-			break;
-		}
-		case 1:
-		{
-
-			lockLiftHinge();
-			handled = 1;
-			break;
-		}
-		default:
-
-			break;
-		}
-	}*/
+	
+	
 	
 
 	if (handled) {
@@ -497,31 +442,29 @@ void BasicExample::updateSubstep(const bool print)
 	
 	
 	double reward_value = distance_ - new_distance_;
-	//b3Printf("distance = %f\n", reward_value);
+	
 	
 	if (new_distance_ <0.5)
 	{
 		distance_ = new_distance_;
 
-		moveTarget(); // move target when they are too close
+		moveTarget(); 
 
-		return; // don't reward when they are too close
+		return; 
 	}
 
-	VectorND<double> reward_vector(output); // reward_vector is initialized by output
+	VectorND<double> reward_vector(output); 
 
 	for (int d = 0; d < reward_vector.num_dimension_; d++)
 	{
 		if (selected_dir == d)
 		{
-			//          reward_vector[d] = ________________ ? 0.999 : 0.001;
 			reward_vector[d] = reward_value > 0 ? 0.999 : 0.001;
 		}
 		else
 		{
 			reward_vector[d] = reward_vector[d] < 0.001 ? 0.001 : reward_vector[d];
 		}
-		//std::cout << reward_vector[d] << std::endl;
 	}
 
 	const int max_tr = NUM_TRAIN;
