@@ -12,10 +12,6 @@
 #ifndef M_PI
 #define M_PI       3.14159265358979323846
 #endif
-
-#include "NeuralNetwork.h"
-#include "Vector2D.h"
-#include <cstdlib>
 #define NUM_TRAIN 1000000 // Use 1000000
 #include <iostream>
 
@@ -125,8 +121,8 @@ public:
 class Agent
 {
 public:
-	int i_, j_;			// status (s_t) of this agent = position in grid world
-	double reward_;		// reward sum
+	int i_, j_;
+	double reward_;		
 
 	Agent()
 		: i_(0), j_(0), reward_(0.0)
@@ -147,14 +143,11 @@ struct BasicExample : public CommonRigidBodyBase
 {
 
 	int j;
-	double pos_x_, pos_y_, pos_z_;
-	double target_x_, target_y_, target_z_;
 	int num_data = 0;
 	int handled = 1;
-	NeuralNetwork nn_;
-	btScalar distance_;
+	
 	bool m_once;
-	double distance;
+	
 	btAlignedObjectArray<btJointFeedback*> m_jointFeedback;
 	btHingeConstraint* hinge_shader;
 	btHingeConstraint* hinge_elbow;
@@ -166,8 +159,6 @@ struct BasicExample : public CommonRigidBodyBase
 	virtual ~BasicExample();
 	virtual void initPhysics();
 
-	void updateSubstep(const bool print = false);
-	void moveTarget();
 
 	virtual void stepSimulation(float deltaTime);
 	void lockLiftHinge(btHingeConstraint* hinge);
@@ -251,9 +242,6 @@ void BasicExample::stepSimulation(float deltaTime)
 	}
 	
 
-	//updateSubstep(false);
-
-
 	int i = my_agent.i_, j = my_agent.j_;
 	int num = world.getCell(i, j).getMaxQ_Num();
 	std::cout << num << ", " ;
@@ -291,22 +279,6 @@ void BasicExample::stepSimulation(float deltaTime)
 		}
 	}
 	
-
-	
-	//pos_z_ = linkBody->getCenterOfMassPosition().getZ();
-	//pos_y_ = linkBody->getCenterOfMassPosition().getY();
-	//target_z_ = body->getCenterOfMassPosition().getZ();
-	//target_y_ = body->getCenterOfMassPosition().getY();
-
-	//distance_ = (Vector2D<double>(pos_y_, pos_z_) - Vector2D<double>(target_y_, target_z_)).getMagnitude();
-	//b3Printf("distance = %f\n", distance_);
-
-	//get distance
-	/*distance = sqrt(pow((body->getCenterOfMassPosition().getZ() - linkBody->getCenterOfMassPosition().getZ()), 2) + pow((body->getCenterOfMassPosition().getY() - linkBody->getCenterOfMassPosition().getY()), 2)) - 0.225;*/
-	/*moveTarget();
-	distance = sqrt(pow((body->getCenterOfMassPosition().getZ() - linkBody->getCenterOfMassPosition().getZ()), 2) + pow((body->getCenterOfMassPosition().getY() - linkBody->getCenterOfMassPosition().getY()), 2)) - 0.225;
-	b3Printf("distance = %f", distance);
-	b3Printf("\n");*/
 	m_dynamicsWorld->stepSimulation(1. / 240, 0);
 
 	static int count = 0;
@@ -452,11 +424,7 @@ void BasicExample::initPhysics()
 
 	if (1)
 	{
-		/*btVector3 groundHalfExtents(0.4, 0.0, 0.025);
-		groundHalfExtents[upAxis] = 0.4f;
-		btBoxShape* box = new btBoxShape(groundHalfExtents);
-		box->initializePolyhedralFeatures();*/
-
+		
 		btSphereShape* linkSphere_1 = new btSphereShape(radius);
 
 		btTransform start; start.setIdentity();
@@ -466,22 +434,6 @@ void BasicExample::initPhysics()
 		body = createRigidBody(0, start, linkSphere_1);
 
 		body->setFriction(0);
-
-
-
-		/*btVector3 human_HalfExtents(0.8, 0.0, 0.025);
-		human_HalfExtents[upAxis] = 0.8f;
-		btBoxShape* human_box = new btBoxShape(human_HalfExtents);
-		human_box->initializePolyhedralFeatures();
-
-		btTransform human_start;
-		human_start.setIdentity();
-		groundOrigin_target = btVector3(-0.4f, 2.8f, -1.6f);
-
-		human_start.setOrigin(groundOrigin_target);
-		human_body = createRigidBody(0, human_start, human_box);
-
-		human_body->setFriction(0);*/
 
 	}
 
@@ -508,10 +460,6 @@ void BasicExample::initPhysics()
 	world.getCell(1, 1).reward_ = -1.0;
 	world.getCell(2, 1).reward_ = -1.0;
 	world.getCell(3, 1).reward_ = -1.0;
-
-
-
-	
 
 	world.print();
 
@@ -542,12 +490,9 @@ void BasicExample::initPhysics()
 
 		if (world.isInside(i, j) == true) // move robot if available
 		{
-			// move agent
 			my_agent.i_ = i;
 			my_agent.j_ = j;
-			// update reward
 			my_agent.reward_ += world.getCell(i_old, j_old).reward_;
-			// update q values of old cell
 			switch (action)
 			{
 			case 0:
@@ -563,7 +508,6 @@ void BasicExample::initPhysics()
 				world.getCell(i_old, j_old).q_[3] = world.getCell(i_old, j_old).q_[3] + 0.5*(world.getCell(i, j).reward_ + 0.9* world.getCell(i, j).getMaxQ() - world.getCell(i_old, j_old).q_[3]);
 				break;
 			}
-			// reset if agent is in final cells
 			if (world.getCell(i, j).reward_ == 1 || world.getCell(i, j).reward_ == -1) {
 				my_agent.i_ = 0;
 				my_agent.j_ = 0;
@@ -572,13 +516,8 @@ void BasicExample::initPhysics()
 		}
 		else
 		{
-			// you may give negative reward (penalty) to agent.
 			world.getCell(i_old, j_old).q_[action] = -1.0;
 		}
-
-	/*	std::cout << "Agent status " << my_agent.i_ << " " << my_agent.j_ << " " << my_agent.reward_ << std::endl;
-		std::cout << "action " << action << std::endl;
-		world.print();*/
 	}
 
 	world.print();
@@ -586,192 +525,6 @@ void BasicExample::initPhysics()
 	m_guiHelper->autogenerateGraphicsObjects(m_dynamicsWorld);
 }
 
-
-void BasicExample::updateSubstep(const bool print)
-{
-	VectorND<D> input;
-	input.initialize(4);
-
-	input[0] = pos_z_;
-	input[1] = pos_y_;
-	input[2] = target_y_;
-	input[3] = target_z_;
-
-	nn_.setInputVector(input);
-	nn_.feedForward();
-
-	VectorND<D> output;
-	nn_.copyOutputVector(output, false);
-	////std::cout << linkBody->getCenterOfMassPosition().getZ() << " " << pos_y_ << std::endl;
-	////   if(print == true) std::cout << output << std::endl;
-
-	const int selected_dir = nn_.getIXProbabilistic(output);
-	
-
-	if (handled) {
-		j = selected_dir;
-		switch (selected_dir)
-		{
-
-		case 0:
-		{
-			// b3Printf("left.\n");
-
-
-			moveRight(hinge_shader);
-			handled = 0;
-			//b3Printf("second = %f\n", linkBody->getCenterOfMassPosition().getZ());
-			break;
-
-		}
-		case 1:
-		{
-			// b3Printf("right.\n");
-
-			moveLeft(hinge_shader);
-			handled = 0;
-			break;
-		}
-		case 2:
-		{
-
-			// b3Printf("left.\n");
-			moveLeft(hinge_elbow);
-			handled = 0;
-			/*btVector3 basePosition = btVector3(0.0, 0.0f, 1.54f);
-			body->translate(basePosition);*/
-
-			break;
-
-		}
-		case 3:
-		{
-
-			// b3Printf("left.\n");
-			moveRight(hinge_elbow);
-			handled = 0;
-			/*btVector3 basePosition = btVector3(0.0, 0.0f, -1.54f);
-			body->translate(basePosition);*/
-			break;
-		}
-		}
-	}
-	else
-	{
-
-		switch (j)
-		{
-		case 0:
-		case 1:
-		{
-
-			lockLiftHinge(hinge_shader);
-			handled = 1;
-			break;
-		}
-		case 2:
-		case 3:
-		{
-
-			lockLiftHinge(hinge_elbow);
-			handled = 1;
-			break;
-		}
-		default:
-
-			break;
-		}
-	}
-
-	pos_z_ = linkBody->getCenterOfMassPosition().getZ();
-	pos_y_ = linkBody->getCenterOfMassPosition().getY();
-
-	//b3Printf("distance = %f\n", pos_z_);
-	const double new_distance_ = (Vector2D<double>(pos_y_, pos_z_) - Vector2D<double>(target_y_, target_z_)).getMagnitude();
-
-
-	double reward_value = distance_ - new_distance_;
-	//b3Printf("distance = %f\n", reward_value);
-
-	if (new_distance_ <0.5)
-	{
-		distance_ = new_distance_;
-
-		moveTarget(); // move target when they are too close
-
-		return; // don't reward when they are too close
-	}
-
-	VectorND<double> reward_vector(output); // reward_vector is initialized by output
-
-	for (int d = 0; d < reward_vector.num_dimension_; d++)
-	{
-		if (selected_dir == d)
-		{
-			//          reward_vector[d] = ________________ ? 0.999 : 0.001;
-			reward_vector[d] = reward_value > 0 ? 0.999 : 0.001;
-		}
-		else
-		{
-			reward_vector[d] = reward_vector[d] < 0.001 ? 0.001 : reward_vector[d];
-		}
-		//std::cout << reward_vector[d] << std::endl;
-	}
-
-	const int max_tr = NUM_TRAIN;
-
-	static int counter = 0;
-	const int one_percent = (double)max_tr / 100.0;
-
-	static int itr = 0;
-	if (itr < max_tr) // train
-	{
-		itr++;
-		counter++;
-
-		if (counter == one_percent)
-		{
-			printf("%f percent \n", (double)itr / (double)max_tr * 100.0);
-
-			counter = 0;
-		}
-
-		nn_.propBackward(reward_vector);
-	}
-
-	distance_ = new_distance_;
-}
-
-void BasicExample::moveTarget()
-{
-
-	switch (num_data) {
-	case 0:
-	{
-		btVector3 basePosition1 = btVector3(0.0, -1.4, 0.0);
-		body->translate(basePosition1);
-		num_data = 1;
-		break;
-	}
-
-	
-
-	case 1:
-	{
-		btVector3 basePosition3 = btVector3(0.0, 1.4, 0.0);
-		body->translate(basePosition3);
-		num_data = 0;
-		break;
-	}
-
-
-
-	}
-
-	target_y_ = body->getCenterOfMassPosition().getY();
-	target_z_ = body->getCenterOfMassPosition().getZ();
-	//std::cout << target_y_ << std::endl;
-}
 bool BasicExample::keyboardCallback(int key, int state)
 {
 	bool handled = true;
